@@ -148,8 +148,6 @@ function getBaseurl() {
 	if (apiurl != "http://twitter.com") {
 		base = base.replace(/\/api$/, '');
 	}
-	
-	jsdump("getBaseurl : " + base);
 	return base;
 }
 
@@ -325,11 +323,11 @@ function formatTweet(tweet) {
 	if (tweet.source != undefined && tweet.source != null && tweet.source != "") {
 		via = " via " + tweet.source;
 	} 
-	
+
 	var result = "<div id=\"tweet-" + tweet.id + "\" class=\"tweetbox\" name=\"" + tweetType(tweet) + "\" style=\"display:" + display + "\" onmouseover=\"showIcons("+ tweet.id + ")\" onmouseout=\"showInfo(" + tweet.id + ")\">"
 	           + " <div class=\"" + sb.msg + "\">"
                + "  <div class=\"" + sb.icon + "\">"
-               + "   <a onmouseover=\"this.style.cursor='pointer';\" onclick=\"linkTo('" + getBaseurl() + sanitize(user.screen_name) + "');\" style=\"margin:0px;padding:0px\" title=\"View " + sanitize(user.screen_name) + "'s profile\">"
+               + "   <a onmouseover=\"this.style.cursor='pointer';\" onclick=\"linkTo('" + getBaseurl() + "/" + sanitize(user.screen_name) + "');\" style=\"margin:0px;padding:0px\" title=\"View " + sanitize(user.screen_name) + "'s profile\">"
                + "    <img src=\"" + user.profile_image_url + "\" class=\"avatar\" />"
                + "   </a>"
                + "  </div>"
