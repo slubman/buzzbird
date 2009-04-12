@@ -142,6 +142,17 @@ function getApiurl() {
 	return getChromeElement('apiurlId').value;
 }
 
+// Returns the base url (laconica case is different of twitter cas)
+function getBaseurl() {
+	var base = getApiurl();
+	if (apiurl != "http://twitter.com") {
+		base = base.replace(/\/api$/, '');
+	}
+	
+	jsdump("getBaseurl : " + base);
+	return base;
+}
+
 // Returns the username from the UI.
 //
 function getUsername() {
@@ -274,12 +285,12 @@ function formatTweet(tweet) {
 	
 	// Next, replace the twitter handles
 	re = new RegExp("@(\\w*)", "g");
-	text = text.replace(re, "@<a onmouseover=\"this.style.cursor='pointer';\" onclick=\"linkTo('" + getApiurl() + "/$1');\">$1</a>");
+	text = text.replace(re, "@<a onmouseover=\"this.style.cursor='pointer';\" onclick=\"linkTo('" + getBaseurl() + "/$1');\">$1</a>");
 	
 	// Replace the group handles (laconica)
-	if (getApiurl() == "http://identi.ca/api") {
+	if (getApiurl() != "http://twitter.com") {
 		re = new RegExp("!(\\w*)", "g");
-		text = text.replace(re, "!<a onmouseover=\"this.style.cursor='pointer';\" onclick=\"linkTo('" + getApiurl() + "/group/$1');\">$1</a>");
+		text = text.replace(re, "!<a onmouseover=\"this.style.cursor='pointer';\" onclick=\"linkTo('" + getBaseurl() + "/group/$1');\">$1</a>");
 	}
 
 	// Finally, replace the hashtags
@@ -318,7 +329,7 @@ function formatTweet(tweet) {
 	var result = "<div id=\"tweet-" + tweet.id + "\" class=\"tweetbox\" name=\"" + tweetType(tweet) + "\" style=\"display:" + display + "\" onmouseover=\"showIcons("+ tweet.id + ")\" onmouseout=\"showInfo(" + tweet.id + ")\">"
 	           + " <div class=\"" + sb.msg + "\">"
                + "  <div class=\"" + sb.icon + "\">"
-               + "   <a onmouseover=\"this.style.cursor='pointer';\" onclick=\"linkTo('" + getApiurl() + sanitize(user.screen_name) + "');\" style=\"margin:0px;padding:0px\" title=\"View " + sanitize(user.screen_name) + "'s profile\">"
+               + "   <a onmouseover=\"this.style.cursor='pointer';\" onclick=\"linkTo('" + getBaseurl() + sanitize(user.screen_name) + "');\" style=\"margin:0px;padding:0px\" title=\"View " + sanitize(user.screen_name) + "'s profile\">"
                + "    <img src=\"" + user.profile_image_url + "\" class=\"avatar\" />"
                + "   </a>"
                + "  </div>"
