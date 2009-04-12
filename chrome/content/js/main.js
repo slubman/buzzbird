@@ -276,6 +276,12 @@ function formatTweet(tweet) {
 	re = new RegExp("@(\\w*)", "g");
 	text = text.replace(re, "@<a onmouseover=\"this.style.cursor='pointer';\" onclick=\"linkTo('" + getApiurl() + "/$1');\">$1</a>");
 	
+	// Replace the group handles (laconica)
+	if (getApiurl() == "http://identi.ca/api") {
+		re = new RegExp("!(\\w*)", "g");
+		text = text.replace(re, "!<a onmouseover=\"this.style.cursor='pointer';\" onclick=\"linkTo('" + getApiurl() + "/group/$1');\">$1</a>");
+	}
+
 	// Finally, replace the hashtags
 	re = new RegExp("#(\\w*)", "g");
 	text = text.replace(re, "#<a onmouseover=\"this.style.cursor='pointer';\" onclick=\"linkTo('http://hashtags.org/tag/$1');\">$1</a>");
