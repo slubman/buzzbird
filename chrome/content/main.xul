@@ -277,6 +277,7 @@ THE SOFTWARE.
 						<menuitem label="&#x2602;" oncommand="appendText('&#x2602;');" /> <!-- Umbrella -->
 						<menuitem label="&#x2744;" oncommand="appendText('&#x2744;');" /> <!-- Snowflake -->
 						<menuitem label="&#x2603;" oncommand="appendText('&#x2603;');" /> <!-- Snowman -->
+						<menuitem label="&#9842;" oncommand="appendText('&#9842;');" /> <!-- Universal recycling symbol -->
 					</menupopup>
 			</toolbarbutton>
 		<spacer flex="1"/>
