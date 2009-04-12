@@ -19,6 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+var apiurl = ""
 var username = "";
 var password = "";
 var mostRecentTweet = null;
@@ -72,10 +73,13 @@ function authenticate() {
 	
 	username = $('username').value;
 	password = $('password').value;
+	apiurl = $('service').value;
+	jsdump('apiurl =>' + apiurl);
 	
 	if (login()) {
 		getChromeElement('usernameLabelId').value = username;
 		getChromeElement('passwordLabelId').value = password;
+		getChromeElement('apiurlId').value = apiurl;
 		getBrowser().loadURI("chrome://buzzbird/content/main.html",null,"UTF-8");
 	} else {
 		message("");
@@ -95,7 +99,7 @@ function authenticate() {
 function login() {
 	var req = new XMLHttpRequest();
 	req.mozBackgroundRequest = true;
-	req.open('GET','http://twitter.com/account/verify_credentials.json',false,username,password);
+	req.open('GET',apiurl + '/account/verify_credentials.json',false,username,password);
 	req.send(null);
 	if (req.status == 200) {
 		var user = eval('(' + req.responseText + ')');
@@ -131,6 +135,11 @@ function getBrowser() {
 //
 function getChromeElement(id) {
 	return getMainWindow().document.getElementById(id);
+}
+
+// Returns the API url form the UI.
+function getApiurl() {
+	return getChromeElement('apiurlId').value;
 }
 
 // Returns the username from the UI.
@@ -265,7 +274,7 @@ function formatTweet(tweet) {
 	
 	// Next, replace the twitter handles
 	re = new RegExp("@(\\w*)", "g");
-	text = text.replace(re, "@<a onmouseover=\"this.style.cursor='pointer';\" onclick=\"linkTo('http://twitter.com/$1');\">$1</a>");
+	text = text.replace(re, "@<a onmouseover=\"this.style.cursor='pointer';\" onclick=\"linkTo('" + getApiurl() + "/$1');\">$1</a>");
 	
 	// Finally, replace the hashtags
 	re = new RegExp("#(\\w*)", "g");
@@ -303,7 +312,7 @@ function formatTweet(tweet) {
 	var result = "<div id=\"tweet-" + tweet.id + "\" class=\"tweetbox\" name=\"" + tweetType(tweet) + "\" style=\"display:" + display + "\" onmouseover=\"showIcons("+ tweet.id + ")\" onmouseout=\"showInfo(" + tweet.id + ")\">"
 	           + " <div class=\"" + sb.msg + "\">"
                + "  <div class=\"" + sb.icon + "\">"
-               + "   <a onmouseover=\"this.style.cursor='pointer';\" onclick=\"linkTo('http://twitter.com/" + sanitize(user.screen_name) + "');\" style=\"margin:0px;padding:0px\" title=\"View " + sanitize(user.screen_name) + "'s profile\">"
+               + "   <a onmouseover=\"this.style.cursor='pointer';\" onclick=\"linkTo('" + getApiurl() + sanitize(user.screen_name) + "');\" style=\"margin:0px;padding:0px\" title=\"View " + sanitize(user.screen_name) + "'s profile\">"
                + "    <img src=\"" + user.profile_image_url + "\" class=\"avatar\" />"
                + "   </a>"
                + "  </div>"
@@ -490,11 +499,11 @@ function fetchUrl(destinations) {
 }
 
 function fetchAll() {
-	fetchUrl(['http://twitter.com/direct_messages.json','http://twitter.com/statuses/replies.json','http://twitter.com/statuses/friends_timeline.json']);
+	fetchUrl([getApiurl()+'/direct_messages.json',getApiurl()+'/statuses/replies.json',getApiurl()+'/statuses/friends_timeline.json']);
 }
 function fetch() {
 	if(typeof fetchUrl === 'function') {
-		fetchUrl(['http://twitter.com/statuses/friends_timeline.json','http://twitter.com/direct_messages.json']);
+		fetchUrl([getApiurl() + '/statuses/friends_timeline.json',getApiurl() + '/direct_messages.json']);
 	} else {
 		//jsdump('Hmph.  fetchUrl is not defined?  Trying again in 5 seconds.');
 		//message('Error - retrying.');
@@ -557,7 +566,7 @@ function postTweetCallback(tweetText) {
 }
 function postTweet() {
 	var tweet = getChromeElement('textboxid').value;
-	url = 'http://twitter.com/statuses/update.json';
+	url = getApiurl() + '/statuses/update.json';
 	url = url + '?status=' + escape(tweet);
 	new Ajax.Request(url,
 		{
@@ -606,7 +615,7 @@ function retweet(id) {
 // Favorite
 //
 function favorite(id) {
-	url = 'http://twitter.com/favorites/create/' + id + '.json';
+	url = getApiurl() + '/favorites/create/' + id + '.json';
 	new Ajax.Request(url,
 		{
 			method:'post',

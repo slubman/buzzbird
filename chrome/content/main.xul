@@ -178,6 +178,7 @@ THE SOFTWARE.
     <toolbar id="toolbarid" class="chromeclass-toolbar" collapsed="true" >
 		<hbox>
 			<vbox>
+				<label id="apiurlId" hidden="true" />
 				<label id="realnameLabelId" value="Testy Tester" style="padding:10px 0px 0px 9px; margin:0px 0px 0px 0px; font-size:1.1em;" />
 				<label id="usernameLabelId" value="" hidden="true" />
 				<label id="passwordLabelId" hidden="true" />

@@ -45,6 +45,15 @@
 					<td class="smaller">password</td>
 					<td><input id="password" type="password" onkeypress="checkEnter(event);" /></td>
 				</tr>
+				<tr>
+					<td class="smaller">service</td>
+					<td>
+						<select id="service">
+							<option type="radio" onkeypress="checkEnter(event);" value="http://twitter.com">twitter</option>
+							<option type="radio" onkeypress="checkEnter(event);" selected="true" value="http://identi.ca/api">identi.ca</option>
+						</select>
+					</td>
+				</tr>
 			</table>
 			<input type="button" id="loginOkButton" name="ok" value="Start Tweeting" onclick="authenticate();" />
 		</form>
