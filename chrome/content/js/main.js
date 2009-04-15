@@ -38,7 +38,8 @@ var classes = {
 		textColumn: "tweetTextColumn",
 		screenName: "tweetScreenName",
 		content: "tweetContent",
-		info: "tweetInfo"
+		info: "tweetInfo",
+		icon: "tweetIcon"
 	},
 	"mine" : {
 		message: "tweetMessage",
@@ -51,7 +52,8 @@ var classes = {
 		textColumn: "tweetTextColumn",
 		screenName: "tweetScreenName",
 		content: "tweetContent",
-		info: "tweetInfo"
+		info: "tweetInfo",
+		icon: "tweetIcon"
 	},
 	"reply" : {
 		message: "replyMessage",
@@ -64,7 +66,8 @@ var classes = {
 		textColumn: "replyTextColumn",
 		screenName: "replyScreenName",
 		content: "replyContent",
-		info: "replyInfo"
+		info: "replyInfo",
+		icon: "replyIcon"
 	},
 	"direct-to" : {
 		message: "tweetMessage",
@@ -77,7 +80,8 @@ var classes = {
 		textColumn: "tweetTextColumn",
 		screenName: "tweetScreenName",
 		content: "tweetContent",
-		info: "tweetInfo"
+		info: "tweetInfo",
+		icon: "tweetIcon"
 	},
 	"direct-from" : {
 		message: "directFromMessage",
@@ -90,7 +94,8 @@ var classes = {
 		textColumn: "directFromTextColumn",
 		screenName: "directFromScreenName",
 		content: "directFromContent",
-		info: "directFromInfo"
+		info: "directFromInfo",
+		icon: "directFromIcon"
 	}
 }
 
@@ -406,10 +411,10 @@ function formatTweet(tweet) {
      + "    </span>"
      + "   </span>"
      + "   <span id=\"tweetIcons-" + tweet.id + "\" style=\"display:none;\">"	        
-     + "    <a class=\"" + c.info + "\" title=\"Retweet This\" onclick=\"retweet(" + tweet.id + ");\"><img src=\"chrome://buzzbird/content/images/recycle-grey-16x16.png\" class=\"tweetIcon\" /></a>"
-     + "    <a class=\"" + c.info + "\" title=\"Reply to " + sanitize(user.screen_name) + "\" onclick=\"replyTo(" + tweet.id + ");\"><img src=\"chrome://buzzbird/content/images/reply-grey-16x16.png\" class=\"tweetIcon\" /></a>"
-     + "    <a class=\"" + c.info + "\" title=\"Send a Direct Message to " + user.screen_name + "\" onclick=\"sendDirect(" + tweet.id + ");\"><img src=\"chrome://buzzbird/content/images/phone-grey-16x16.png\" class=\"tweetIcon\" /></a>"
-     + "    <a class=\"" + c.info + "\" title=\"Mark as Favorite\" onclick=\"favorite(" + tweet.id + ");\"><img src=\"chrome://buzzbird/content/images/heart-grey-16x16.png\" class=\"tweetIcon\" /></a>"
+     + "    <a class=\"" + c.info + "\" title=\"Retweet This\" onclick=\"retweet(" + tweet.id + ");\"><img src=\"chrome://buzzbird/content/images/recycle-grey-16x16.png\" class=\"" + c.icon + "\" /></a>"
+     + "    <a class=\"" + c.info + "\" title=\"Reply to " + sanitize(user.screen_name) + "\" onclick=\"replyTo(" + tweet.id + ");\"><img src=\"chrome://buzzbird/content/images/reply-grey-16x16.png\" class=\"" + c.icon + "\" /></a>"
+     + "    <a class=\"" + c.info + "\" title=\"Send a Direct Message to " + user.screen_name + "\" onclick=\"sendDirect(" + tweet.id + ");\"><img src=\"chrome://buzzbird/content/images/phone-grey-16x16.png\" class=\"" + c.icon + "\" /></a>"
+     + "    <a class=\"" + c.info + "\" title=\"Mark as Favorite\" onclick=\"favorite(" + tweet.id + ");\"><img src=\"chrome://buzzbird/content/images/heart-grey-16x16.png\" class=\"" + c.icon + "\" /></a>"
      + "   </span>"
      + "  </div>"
      + " </div>"
