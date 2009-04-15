@@ -178,7 +178,6 @@ THE SOFTWARE.
     <toolbar id="toolbarid" class="chromeclass-toolbar" collapsed="true" >
 		<hbox>
 			<vbox>
-				<label id="apiurlId" hidden="true" />
 				<label id="realnameLabelId" value="Testy Tester" style="padding:10px 0px 0px 9px; margin:0px 0px 0px 0px; font-size:1.1em;" />
 				<label id="usernameLabelId" value="" hidden="true" />
 				<label id="passwordLabelId" hidden="true" />
@@ -213,12 +212,12 @@ THE SOFTWARE.
 
     <vbox flex="1">
 		<tabbox flex="3">
-			<tabs align="start" closebutton="true" collapsed="true">
+			<tabs align="start" closebutton="true" >
 				<tab label="Main"/>
 				<tab label="Secondary" />
 			</tabs>
 			<tabpanel flex="3">
-            	<browser height="450" type="content-primary" src="chrome://buzzbird/content/login.html" id="browserid" flex="3" tooltip="aHTMLTooltip" />
+            	<browser height="450" type="content-primary" src="chrome://buzzbird/content/template.html" id="browserid" flex="3" tooltip="aHTMLTooltip" />
 			</tabpanel>
 		</tabbox>
 		<hbox>
@@ -282,7 +281,6 @@ THE SOFTWARE.
 						<menuitem label="&#x2602;" oncommand="appendText('&#x2602;');" /> <!-- Umbrella -->
 						<menuitem label="&#x2744;" oncommand="appendText('&#x2744;');" /> <!-- Snowflake -->
 						<menuitem label="&#x2603;" oncommand="appendText('&#x2603;');" /> <!-- Snowman -->
-						<menuitem label="&#9842;" oncommand="appendText('&#9842;');" /> <!-- Universal recycling symbol -->
 					</menupopup>
 			</toolbarbutton>
 		<spacer flex="1"/>
