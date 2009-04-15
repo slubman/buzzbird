@@ -237,8 +237,27 @@ function updateLengthDisplay() {
 	var length = textbox.value.length;
 	if (length != 0) {
 		getChromeElement('statusid').value = length + '/140';
+		if (length > 140) {
+			if (textbox.getAttribute("class") != "full") {
+				textbox.setAttribute("class", "full");
+				textbox.style.color = "#F00";
+				textbox.style.backgroundColor = "#F00"; // Doesn't work
+				textbox.style.borderColor = "#F00"; // Doesn't work
+				jsdump("textbox.class : " + textbox.getAttribute("class"));
+			}
+		} else {
+			if (textbox.hasAttribute("class")) {
+				textbox.removeAttribute("class");
+				textbox.style.color = null;
+				textbox.style.backgroundColor = null; // Doesn't work
+				textbox.style.borderColor = null; // Doesn't work
+				jsdump("textbox.class : " + textbox.getAttribute("class"));
+			}
+		}
 	} else {
 		getChromeElement('statusid').value = '';
+		textbox.removeAttribute("class");
+		jsdump("textbox.class : " + textbox.getAttribute("class"));
 	}
 }
 
