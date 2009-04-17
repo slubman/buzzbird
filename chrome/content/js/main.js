@@ -42,18 +42,18 @@ var classes = {
 		icon: "tweetIcon"
 	},
 	"mine" : {
-		message: "tweetMessage",
-		bottomRow: "tweetBottomRow",
-		box: "tweetBox",
-		text: "tweetText",
-		table: "tweetTable",
-		avatar: "tweetAvatar",
-		avatarColumn: "tweetAvatarColumn",
-		textColumn: "tweetTextColumn",
-		screenName: "tweetScreenName",
-		content: "tweetContent",
-		info: "tweetInfo",
-		icon: "tweetIcon"
+		message: "mineMessage",
+		bottomRow: "mineBottomRow",
+		box: "mineBox",
+		text: "mineText",
+		table: "mineTable",
+		avatar: "mineAvatar",
+		avatarColumn: "mineAvatarColumn",
+		textColumn: "mineTextColumn",
+		screenName: "mineScreenName",
+		content: "mineContent",
+		info: "mineInfo",
+		icon: "mineIcon"
 	},
 	"reply" : {
 		message: "replyMessage",
@@ -99,6 +99,21 @@ var classes = {
 	}
 }
 
+// Runs on login screen, if service menu is changed
+function displayUrlField() {
+	var service = $('service').value;
+	var display = "none";
+	if (service == "twitter") {
+		$('url').value="http://twitter.com";
+	} else if (service == "identi.ca") {
+		$('url').value="http://identi.ca/api";
+	} else {
+		display = "table-row";
+		$('url').value="";
+	}
+	$('urlField').style.display=display;
+}
+
 // Gets the login params and calls login to attempt authenticating
 // with the twitter API.  Calls start() if successful.
 //
@@ -111,7 +126,7 @@ function authenticate() {
 	
 	username = $('username').value;
 	password = $('password').value;
-	apiurl = $('service').value;
+	apiurl = $('url').value;
 	jsdump('apiurl =>' + apiurl);
 	
 	if (login()) {

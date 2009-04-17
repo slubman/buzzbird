@@ -48,11 +48,16 @@
 				<tr>
 					<td class="smaller">service</td>
 					<td>
-						<select id="service">
-							<option type="radio" onkeypress="checkEnter(event);" value="http://twitter.com">twitter</option>
-							<option type="radio" onkeypress="checkEnter(event);" selected="true" value="http://identi.ca/api">identi.ca</option>
+						<select id="service" onChange="displayUrlField();">
+							<option type="radio" onkeypress="checkEnter(event);" value="twitter">twitter</option>
+							<option type="radio" onkeypress="checkEnter(event);" selected="true" value="identi.ca">identi.ca</option>
+							<option type="radio" onkeypress="checkEnter(event);" value="laconica">Open Micro Blogging</option>
 						</select>
 					</td>
+				</tr>
+				<tr id="urlField" style="display: none;">
+					<td class="smaller">url</td>
+					<td><input id="url" type="text" onkeypress="checkEnter(event);" value="http://identi.ca/api" /></td>
 				</tr>
 			</table>
 			<input type="button" id="loginOkButton" name="ok" value="Start Tweeting" onclick="authenticate();" />
