@@ -30,13 +30,14 @@ THE SOFTWARE.
 
 <window id="main-window" 
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" 
-        width="300" 
-        height="625" 
+        width="500" 
+        height="600" 
         title="Buzzbird">
+	<script type="text/javascript" src="chrome://buzzbird/content/js/utils.js"></script>
 	<script type="text/javascript" src="chrome://buzzbird/content/js/tooltip.js"></script>
 	<script type="text/javascript" src="chrome://buzzbird/content/js/prototype-1.6.0.3-patched.js"></script>	
-	<script type="text/javascript" src="chrome://buzzbird/content/js/utils.js"></script>
 	<script type="text/javascript" src="chrome://buzzbird/content/js/main.js"></script>
+	
 	<script type="application/x-javascript" src="chrome://buzzbird/content/global/globalOverlay.js"></script>
 	<script type="application/x-javascript" src="chrome://buzzbird/content/global/editMenuOverlay.js"></script>
 
@@ -226,6 +227,7 @@ THE SOFTWARE.
 			<textbox id="textboxid" multiline="true" flex="1" 
 	                  onkeypress="keyPressed(event);" 
 	                  onkeyup="keyUp(event);" 
+	                  onblur="updateLengthDisplay();"
 	                  spellcheck="true"
 	                  collapsed="true" />
 		</hbox>

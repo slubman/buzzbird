@@ -1,7 +1,12 @@
-<!ENTITY prefPane.label         "Preferences">
+<!ENTITY prefPaneGeneral.label         "General">
+<!ENTITY prefPaneAccounts.label         "Accounts">
+<!ENTITY preferencesDefaultTitle.label  "Preferences">
 
 <!ENTITY updateIntervalPref.label         "Update Interval"> 
 <!ENTITY updateIntervalPref.accesskey       "U"> 
+
+<!ENTITY  preferencesCloseButton.label            "Close">
+<!ENTITY  preferencesCloseButton.accesskey        "C">
 
 <!ENTITY twoMinutesPref.label         "Every 2 minutes">
 <!ENTITY threeMinutesPref.label         "Every 3 minutes">
@@ -15,6 +20,7 @@
 <!ENTITY animateNeverPref.label         "Never">
 <!ENTITY animateAlwaysPref.label         "Always">
 
+<!ENTITY prefForgetAccount.label         "Forget Saved Account Data">
 
 
 

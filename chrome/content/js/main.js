@@ -117,23 +117,25 @@ function displayUrlField() {
 // Gets the login params and calls login to attempt authenticating
 // with the twitter API.  Calls start() if successful.
 //
-function authenticate() {
+function authenticate(u, p, s, save) {
 	message("Authenticating");
 	$('loginThrobber').style.display = 'inline';
 	$('username').disabled = true;
 	$('password').disabled = true;
 	$('loginOkButton').disabled = true;
 	
-	username = $('username').value;
-	password = $('password').value;
-	apiurl = $('url').value;
-	jsdump('apiurl =>' + apiurl);
+	username = u;
+	password = p;
+	apiurl = s;
 	
 	if (login()) {
 		getChromeElement('usernameLabelId').value = username;
 		getChromeElement('passwordLabelId').value = password;
 		getChromeElement('apiurlId').value = apiurl;
 		registerEvents();
+		if (save) {
+			saveCredentials(username,password);
+		}
 		getBrowser().loadURI("chrome://buzzbird/content/main.html",null,"UTF-8");
 	} else {
 		message("");
@@ -145,6 +147,19 @@ function authenticate() {
 		$('password').select(); // this not working as well as I had hoped.  :(
 		$('password').focus(); 
 	}
+}
+
+// Save these credentials as the new default if it does not already exist.
+//
+function saveCredentials(username,password) {
+   var myLoginManager = Components.classes["@mozilla.org/login-manager;1"]
+		                         .getService(Components.interfaces.nsILoginManager);
+   var nsLoginInfo = new Components.Constructor("@mozilla.org/login-manager/loginInfo;1",
+	                                             Components.interfaces.nsILoginInfo,
+	                                             "init");
+   var loginInfo = new nsLoginInfo('localhost', 'localhost', null, username, password,
+	                                'username', 'password');
+   myLoginManager.addLogin(loginInfo);
 }
 
 // This function does the actual authentication request to the twitter API.  Called
@@ -173,31 +188,12 @@ function registerEvents() {
 	jsdump('register events');
 	try {
 		getMainWindow().document.addEventListener("fetchAll", fetchAll, false); 
+		getMainWindow().document.addEventListener("fetch", fetch, false); 
 		getMainWindow().document.addEventListener("start", start, false); 
+		getMainWindow().document.addEventListener("updateTweetLength", "function proxy(that) { that.updateLengthDisplay() };  proxy(getMainWindow())", false); 
 	} catch(e) {
 		jsdump('Problem initializing events: ' + e);
 	}
-}
-
-// Called to initialize the main window from the browser's onload method.
-//
-function start() {
-	// Update Frequency, need to make this configurable.
-	//var interval = getIntPref('buzzbird.update.interval',180000);
-	var interval = 180000;
-	jsdump('interval=' + interval);
-	showingAllTweets = getChromeElement('showingAllTweetsId').value;
-	showingReplies = getChromeElement('showingRepliesId').value;
-	showingDirect = getChromeElement('showingDirectId').value;
-	var updateTimer = getMainWindow().setInterval(fetch,interval);
-	getChromeElement('updateTimerId').value = updateTimer;
-	getChromeElement('toolbarid').collapsed=false;
-	getChromeElement('textboxid').collapsed=false;
-	getChromeElement('refreshButtonId').collapsed=false;
-	getChromeElement('shortenUrlId').collapsed=false;
-	getChromeElement('markAllAsReadId').collapsed=false;
-	getChromeElement('symbolButtonId').collapsed=false;
-	fetchAll();
 }
 
 // Enables/disables the refresh button.
@@ -290,7 +286,7 @@ function updateTimestamps() {
 	var now = new Date();
 	for (var i=0; i<timestamps.length; i++) {
 		tweetid = timestamps[i].id;
-		when = $(tweetid).innerHTML;
+		when = getBrowser().contentDocument.getElementById(tweetid).innerHTML;
 		var then = new Date(parseFloat(when));
 		var delta = now - then;
 		var prettyWhen = "less than 1m ago";
@@ -304,7 +300,7 @@ function updateTimestamps() {
 			var prettyWhen = "more than " + parseInt(delta/(ONE_DAY)) + "d ago";
 		}
 		var elid = 'prettytime-' + tweetid.substring(tweetid.indexOf('-')+1);
-		$(elid).innerHTML = prettyWhen;
+		getBrowser().contentDocument.getElementById(elid).innerHTML = prettyWhen;
 	}
 	jsdump('finished updating timestamps.');
 
@@ -398,7 +394,8 @@ function formatTweet(tweet) {
      + "    <a class=\"" + c.info + "\" title=\"Reply to " + sanitize(user.screen_name) + "\" onclick=\"replyTo(" + tweet.id + ");\"><img src=\"chrome://buzzbird/content/images/reply-grey-16x16.png\" class=\"" + c.icon + "\" /></a>"
      + "    <a class=\"" + c.info + "\" title=\"Send a Direct Message to " + user.screen_name + "\" onclick=\"sendDirect(" + tweet.id + ");\"><img src=\"chrome://buzzbird/content/images/phone-grey-16x16.png\" class=\"" + c.icon + "\" /></a>"
      + "    <a class=\"" + c.info + "\" title=\"Mark as Favorite\" onclick=\"favorite(" + tweet.id + ");\"><img src=\"chrome://buzzbird/content/images/heart-grey-16x16.png\" class=\"" + c.icon + "\" /></a>"
-     + "   </span>"
+     + "    <a class=\"" + c.info + "\" title=\"Stop following" + sanitize(user.screen_name) + "\" onclick=\"stopFollowingTweeter(" + tweet.id + ");\"><img src=\"chrome://buzzbird/content/images/stop-grey-16x16.png\" class=\"" + c.icon + "\" /></a>"
+	 + "   </span>"
      + "  </div>"
      + " </div>"
      + "</div>"
@@ -481,7 +478,7 @@ function fetchUrl(destinations) {
 		updateLengthDisplay();		
 		refreshAllowed(true);
 		progress(false);
-		setTimeout(updateTimestamps(),1000);
+		setTimeout("function proxy(that) {that.updateTimestamps()}; proxy(getMainWindow());",1000);
 	} else {
 		var since = url.match('friends_timeline') ? mostRecentTweet : mostRecentDirect;
 		if ((url.match('friends_timeline') || url.match('direct_messages')) && since != null) {
@@ -507,12 +504,11 @@ function fetchAll() {
 function fetch() {
 	if(typeof fetchUrl === 'function') {
 		fetchUrl([getApiurl() + '/statuses/friends_timeline.json',getApiurl() + '/direct_messages.json']);
-	} else {
+	} //else {
 		//jsdump('Hmph.  fetchUrl is not defined?  Trying again in 5 seconds.');
-		//message('Error - retrying.');
-		//getMainWindow().setTimeout(forceUpdate, 5000);
-		window.setTimeout(forceUpdate, 5000);
-	}
+		//jsdump('Error - retrying.');
+		//window.setTimeout(forceUpdate, 5000);
+	//}
 }
 
 // This function is called from the UI to request a tweet fetch.
@@ -530,6 +526,7 @@ function forceUpdate() {
 	// timer = window.setInterval(fetch,getIntPref('buzzbird.update.interval',180000));
 	// jsdump('setting timer #' + timer);
 	// getChromeElement('updateTimerId').value = timer;
+	jsdump('forceUpdate called.');
 	fetch();
 }
 
@@ -704,10 +701,29 @@ function quitApplication(aForceQuit) {
 
 function openPreferences() {
   var instantApply = getBoolPref("browser.preferences.instantApply", false);
+  jsdump("instantApply is " + instantApply);
   var features = "chrome,titlebar,toolbar,centerscreen" + (instantApply ? ",dialog=no" : ",modal");
 
-//	var features = "chrome,titlebar,toolbar,centerscreen,modal";
+	//var features = "chrome,titlebar,toolbar,centerscreen,modal";
 	window.openDialog("chrome://buzzbird/content/prefs.xul", "", features);
 }
 
-
+// Called to initialize the main window from the browser's onload method.
+//
+function start() {
+	// Update Frequency, need to make this configurable.
+	var interval = getIntPref('buzzbird.update.interval',180000);
+	jsdump('interval=' + interval);
+	showingAllTweets = getChromeElement('showingAllTweetsId').value;
+	showingReplies = getChromeElement('showingRepliesId').value;
+	showingDirect = getChromeElement('showingDirectId').value;
+	var updateTimer = getMainWindow().setInterval( function(that) { that.fetch(); }, interval, getMainWindow());
+	getChromeElement('updateTimerId').value = updateTimer;
+	getChromeElement('toolbarid').collapsed=false;
+	getChromeElement('textboxid').collapsed=false;
+	getChromeElement('refreshButtonId').collapsed=false;
+	getChromeElement('shortenUrlId').collapsed=false;
+	getChromeElement('markAllAsReadId').collapsed=false;
+	getChromeElement('symbolButtonId').collapsed=false;
+	fetchAll();
+}
