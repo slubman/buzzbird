@@ -70,18 +70,18 @@ var classes = {
 		icon: "replyIcon"
 	},
 	"direct-to" : {
-		message: "tweetMessage",
-		bottomRow: "tweetBottomRow",
-		box: "tweetBox",
-		text: "tweetText",
-		table: "tweetTable",
-		avatar: "tweetAvatar",
-		avatarColumn: "tweetAvatarColumn",
-		textColumn: "tweetTextColumn",
-		screenName: "tweetScreenName",
-		content: "tweetContent",
-		info: "tweetInfo",
-		icon: "tweetIcon"
+		message: "directToMessage",
+		bottomRow: "directToBottomRow",
+		box: "directToBox",
+		text: "directToText",
+		table: "directToTable",
+		avatar: "directToAvatar",
+		avatarColumn: "directToAvatarColumn",
+		textColumn: "directToTextColumn",
+		screenName: "directToScreenName",
+		content: "directToContent",
+		info: "directToInfo",
+		icon: "directToIcon"
 	},
 	"direct-from" : {
 		message: "directFromMessage",
@@ -133,6 +133,7 @@ function authenticate() {
 		getChromeElement('usernameLabelId').value = username;
 		getChromeElement('passwordLabelId').value = password;
 		getChromeElement('apiurlId').value = apiurl;
+		registerEvents();
 		getBrowser().loadURI("chrome://buzzbird/content/main.html",null,"UTF-8");
 	} else {
 		message("");
@@ -166,71 +167,38 @@ function login() {
 	}
 }
 
-// Utility method to return the window object.
+// Registers the events for this window
 //
-function getMainWindow() {
-	var mainWindow = window.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
-	                   .getInterface(Components.interfaces.nsIWebNavigation)
-	                   .QueryInterface(Components.interfaces.nsIDocShellTreeItem)
-	                   .rootTreeItem
-	                   .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
-	                   .getInterface(Components.interfaces.nsIDOMWindow);
-	return mainWindow;
-}
-
-// Utility method to return the main browser window.
-//
-function getBrowser() {
-	return getMainWindow().document.getElementById('browserid');
-}
-
-// Utility method to return the specified UI element.
-//
-function getChromeElement(id) {
-	return getMainWindow().document.getElementById(id);
-}
-
-// Returns the API url form the UI.
-function getApiurl() {
-	return getChromeElement('apiurlId').value;
-}
-
-// Returns the base url (laconica case is different of twitter cas)
-function getBaseurl() {
-	var base = getApiurl();
-	if (apiurl != "http://twitter.com") {
-		base = base.replace(/\/api$/, '');
+function registerEvents() {
+	jsdump('register events');
+	try {
+		getMainWindow().document.addEventListener("fetchAll", fetchAll, false); 
+		getMainWindow().document.addEventListener("start", start, false); 
+	} catch(e) {
+		jsdump('Problem initializing events: ' + e);
 	}
-	return base;
 }
 
-// Returns the username from the UI.
+// Called to initialize the main window from the browser's onload method.
 //
-function getUsername() {
-	return getChromeElement('usernameLabelId').value;
+function start() {
+	// Update Frequency, need to make this configurable.
+	//var interval = getIntPref('buzzbird.update.interval',180000);
+	var interval = 180000;
+	jsdump('interval=' + interval);
+	showingAllTweets = getChromeElement('showingAllTweetsId').value;
+	showingReplies = getChromeElement('showingRepliesId').value;
+	showingDirect = getChromeElement('showingDirectId').value;
+	var updateTimer = getMainWindow().setInterval(fetch,interval);
+	getChromeElement('updateTimerId').value = updateTimer;
+	getChromeElement('toolbarid').collapsed=false;
+	getChromeElement('textboxid').collapsed=false;
+	getChromeElement('refreshButtonId').collapsed=false;
+	getChromeElement('shortenUrlId').collapsed=false;
+	getChromeElement('markAllAsReadId').collapsed=false;
+	getChromeElement('symbolButtonId').collapsed=false;
+	fetchAll();
 }
-
-// Returns the password from the UI.
-//
-function getPassword() {
-	return getChromeElement('passwordLabelId').value;
-}
-
-// Returns the update timer ID from the UI.
-//
-function getUpdateTimer() {
-	return getChromeElement('updateTimerId').value;
-}
-
-// Opens a link in the user's default browser.
-//
-function linkTo(href) {
-	var ioservice = Components.classes["@mozilla.org/network/io-service;1"].getService(Components.interfaces.nsIIOService);
-	var uriToOpen = ioservice.newURI(href, null, null);
-	var extps = Components.classes["@mozilla.org/uriloader/external-protocol-service;1"].getService(Components.interfaces.nsIExternalProtocolService);
-	extps.loadURI(uriToOpen, null);
-}
-
 
 // Enables/disables the refresh button.
 //
@@ -440,59 +408,6 @@ function formatTweet(tweet) {
 	return result;
 }
 
-function sanitize(text) {
-	// I'm sure there are far better ways to do this, but I suck at regular expressions...
-	var clean = text.replace(/&/g, '&amp;');
-	clean = clean.replace(/&amp;lt;/g, '&lt;');
-	clean = clean.replace(/&amp;gt;/g, '&gt;');
-	clean = clean.replace(/&amp;quot;/g, '&quot;');
-	clean = clean.replace(/&amp;apos;/g, '&apos;');
-	clean = clean.replace(/</g, '&lt;');
-	clean = clean.replace(/>/g, '&gt;');
-	clean = clean.replace(/"(?![^<>]*>)/g, '&quot;');
-	clean = clean.replace(/'(?![^<>]*>)/g, '&apos;');
-	return clean;
-}
-
-function desanitize(text) {
-	var filthy = text.replace(/&amp;/g, '&');
-	filthy = text.replace(/&lt;/g, '<');
-	filthy = text.replace(/&rt;/g, '>');
-	filthy = text.replace(/&quot;/g, '"');
-	filthy = text.replace(/&apos;/g, "'");
-	return filthy;
-}
-
-function showIcons(id) {
-	$('tweetInfo-' + id).style.display = 'none';
-	$('tweetIcons-' + id).style.display = 'inline';
-}
-
-function showInfo(id) {
-	$('tweetInfo-' + id).style.display = 'inline';
-	$('tweetIcons-' + id).style.display = 'none';
-}
-
-// Called to initialize the main window.
-//
-function start() {
-	// Update Frequency, need to make this configurable.
-	var interval = getIntPref('buzzbird.update.interval',180000);
-	jsdump('interval=' + interval);
-	showingAllTweets = getChromeElement('showingAllTweetsId').value;
-	showingReplies = getChromeElement('showingRepliesId').value;
-	showingDirect = getChromeElement('showingDirectId').value;
-	var updateTimer = window.setInterval(fetch,interval);
-	getChromeElement('updateTimerId').value = updateTimer;
-	getChromeElement('toolbarid').collapsed=false;
-	getChromeElement('textboxid').collapsed=false;
-	getChromeElement('refreshButtonId').collapsed=false;
-	getChromeElement('shortenUrlId').collapsed=false;
-	getChromeElement('markAllAsReadId').collapsed=false;
-	getChromeElement('symbolButtonId').collapsed=false;
-	fetchAll();
-}
-
 // Writes to the top of the page.
 //
 function insertAtTop(newText) {
@@ -585,8 +500,10 @@ function fetchUrl(destinations) {
 }
 
 function fetchAll() {
+	jsdump('in fetchAll');
 	fetchUrl([getApiurl()+'/direct_messages.json',getApiurl()+'/statuses/replies.json',getApiurl()+'/statuses/friends_timeline.json']);
 }
+
 function fetch() {
 	if(typeof fetchUrl === 'function') {
 		fetchUrl([getApiurl() + '/statuses/friends_timeline.json',getApiurl() + '/direct_messages.json']);
@@ -616,8 +533,6 @@ function forceUpdate() {
 	fetch();
 }
 
-// Posts a twitter update.
-//
 // Called on succesful tweet postation
 //
 function postTweetCallback(tweetText) {
@@ -650,6 +565,9 @@ function postTweetCallback(tweetText) {
 	}
 	forceUpdate();
 }
+
+// Posts a twitter update.
+//
 function postTweet() {
 	var tweet = getChromeElement('textboxid').value;
 	url = getApiurl() + '/statuses/update.json';
@@ -663,60 +581,6 @@ function postTweet() {
 		    onSuccess: function() { postTweetCallback(tweet); },
 		    onFailure: function() { alert('Error posting status update.'); postTweetCallback(); }
 		});
-}
-
-// Reply
-//
-function replyTo(id) {
-	var user = getBrowser().contentDocument.getElementById("screenname-" + id).innerHTML;
-	var text = '@' + desanitize(user) + ' ';
-	getChromeElement('textboxid').value = text;
-	getChromeElement('statusid').label = text.length + "/140";
-	getChromeElement('textboxid').focus();
-}
-
-// Send DM
-//
-function sendDirect(id) {
-	var raw = getBrowser().contentDocument.getElementById("raw-" + id).innerHTML;
-	var user = getBrowser().contentDocument.getElementById("screenname-" + id).innerHTML;
-	var text = 'd ' + desanitize(user) + ' ';
-	getChromeElement('textboxid').value = text;
-	getChromeElement('statusid').label = text.length + "/140";
-	getChromeElement('textboxid').focus();	
-}
-
-// Re-tweet
-//
-function retweet(id) {
-	var raw = getBrowser().contentDocument.getElementById("raw-" + id).innerHTML;
-	var user = getBrowser().contentDocument.getElementById("screenname-" + id).innerHTML;
-	var text = 'RT @' + desanitize(user) + ': ' + desanitize(raw);
-//	var text = (getApiurl() != "http://twitter.com" ? '&#9842;' : 'RT') +  '@' + desanitize(user) + ': ' + desanitize(raw);
-	text = text.substring(0,140);
-	getChromeElement('textboxid').value = text;
-	updateTweetLength();
-	getChromeElement('textboxid').focus();		
-}
-
-// Favorite
-//
-function favorite(id) {
-	url = getApiurl() + '/favorites/create/' + id + '.json';
-	new Ajax.Request(url,
-		{
-			method:'post',
-			httpUserName: getUsername(),
-			httpPassword: getPassword(),
-		    onSuccess: function() { favoriteCallback; },
-		    onFailure: function() { alert('Failed to favorite that tweet.  Sorry!'); }
-		});	
-}
-
-// Favorite callback
-//
-function favoriteCallback(transport) {
-	getChromeElement('statusid').label = 'Tweet Favorited';
 }
 
 // Runs on each key press in the tweet-authoring text area.
@@ -838,29 +702,6 @@ function quitApplication(aForceQuit) {
   appStartup.quit(quitSeverity);
 }
 
-function getBoolPref(prefname,def) {
-  try { 
-    var pref = Components.classes["@mozilla.org/preferences-service;1"]
-                       .getService(Components.interfaces.nsIPrefBranch);
-    return pref.getBoolPref(prefname);
-  }
-  catch(er) {
-    return def;
-  }
-}
-
-function getIntPref(prefname,def) {
-  try { 
-    var pref = Components.classes["@mozilla.org/preferences-service;1"]
-                       .getService(Components.interfaces.nsIPrefBranch);
-    return pref.getIntPref(prefname);
-  }
-  catch(er) {
-    return def;
-  }
-}
-
-
 function openPreferences() {
   var instantApply = getBoolPref("browser.preferences.instantApply", false);
   var features = "chrome,titlebar,toolbar,centerscreen" + (instantApply ? ",dialog=no" : ",modal");
@@ -868,16 +709,5 @@ function openPreferences() {
 //	var features = "chrome,titlebar,toolbar,centerscreen,modal";
 	window.openDialog("chrome://buzzbird/content/prefs.xul", "", features);
 }
-
-// Craptastic logging.
-//
-function jsdump(str) {
-	var d = new Date();
-	str = d + ': ' + str;
-	Components.classes['@mozilla.org/consoleservice;1']
-    		.getService(Components.interfaces.nsIConsoleService)
-            .logStringMessage(str);
-}
-
 
 
