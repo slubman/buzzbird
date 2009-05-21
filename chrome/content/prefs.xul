@@ -39,12 +39,14 @@ THE SOFTWARE.
    
  <script type="application/x-javascript" src="chrome://buzzbird/content/global/globalOverlay.js"></script>
  <script type="application/x-javascript" src="chrome://buzzbird/content/global/editMenuOverlay.js"></script>
+ <script type="text/javascript" src="chrome://buzzbird/content/js/utils.js"></script>
  <script type="application/x-javascript" src="chrome://buzzbird/content/js/prefs.js"></script>
 
  <prefpane id="paneGeneral" label="&prefPaneGeneral.label;" image="chrome://buzzbird/content/images/prefs-general.png">
     	<preferences>
       		<preference id="updateInterval" name="buzzbird.update.interval" type="int"/>
 			<preference id="animatedAvatars" name="image.animation_mode" type="string"/>
+			<preference id="autoMarkOldTweetsAsRead" name="buzzbird.auto.markread" type="bool"/>
     	</preferences>
 		<vbox>
 			<hbox>
@@ -70,6 +72,10 @@ THE SOFTWARE.
 					</menupopup>
 				</menulist>
 		    </hbox>
+			<hbox>
+				<label control="checkbox_autoMarkOldTweetsAsRead" value="&autoMarkOldTweetsAsRead.label;" /> 
+				<checkbox id="checkbox_autoMarkOldTweetsAsRead" preference="autoMarkOldTweetsAsRead" />
+			</hbox>
 		</vbox>
 	</prefpane>
 	<prefpane id="paneAccounts" label="&prefPaneAccounts.label;" image="chrome://buzzbird/content/images/prefs-accounts.png">
@@ -78,4 +84,10 @@ THE SOFTWARE.
 		<label value="It'll get better in the next release!"/>
 		<button label="&prefForgetAccount.label;" oncommand="forgetCredentials();" />
 	</prefpane>
+	<prefpane id="paneMultiAccounts" label="&prefPaneAccounts.label;" image="chrome://buzzbird/content/images/prefs-accounts.png">
+		<preferences></preferences>
+		<listbox id="richlistbox_accounts">
+		</listbox>
+	</prefpane>
+	
 </prefwindow>

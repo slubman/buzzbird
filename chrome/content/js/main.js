@@ -144,7 +144,7 @@ function authenticate(u, p, s, save) {
 		$('username').disabled = false;
 		$('password').disabled = false;
 		$('loginOkButton').disabled = false;
-		$('password').select(); // this not working as well as I had hoped.  :(
+		//$('password').select(); // this not working as well as I had hoped.  :(
 		$('password').focus(); 
 	}
 }
@@ -170,12 +170,29 @@ function login() {
 	req.mozBackgroundRequest = true;
 	req.open('GET',apiurl + '/account/verify_credentials.json',false,username,password);
 	req.send(null);
-	if (req.status == 200) {
-		var user = eval('(' + req.responseText + ')');
+	
+	var re = /\{"request":NULL.*?/
+	if (re.match(req.responseText)) {
+		jsdump ("Badness in twitter response.  Perhaps down for maintenance?");
+		jsdump(req.responseText);
+		return false;
+	}
+	
+	if (req.status == 200 && req.responseText != 'NULL') {
+		var user = '';
+		try {
+			user = eval('(' + req.responseText + ')');
+		} catch(e) {
+			jsdump('Caught an exception trying to login.');
+			return false;
+		}
+		if (user == '') {
+			jsdump('JSON parse must have borked?');
+			return false;
+		}
 		var img = user.profile_image_url;
 		getChromeElement('avatarLabelId').value = img;
 		getChromeElement('realnameLabelId').value = user.name;
-		getChromeElement('avatarId').src = img;
 		return true;
 	} else {
 		return false;
@@ -190,7 +207,9 @@ function registerEvents() {
 		getMainWindow().document.addEventListener("fetchAll", fetchAll, false); 
 		getMainWindow().document.addEventListener("fetch", fetch, false); 
 		getMainWindow().document.addEventListener("start", start, false); 
-		getMainWindow().document.addEventListener("updateTweetLength", "function proxy(that) { that.updateLengthDisplay() };  proxy(getMainWindow())", false); 
+		getMainWindow().document.addEventListener("openSpeech", getMainWindow().openSpeech, false); 
+		getMainWindow().document.addEventListener("closeSpeech", getMainWindow().closeSpeech, false); 
+		getMainWindow().document.addEventListener("updateTweetLength", getMainWindow().updateLengthDisplay, false); 
 	} catch(e) {
 		jsdump('Problem initializing events: ' + e);
 	}
@@ -219,29 +238,19 @@ function message(text) {
 function updateLengthDisplay() {
 	var textbox = getChromeElement('textboxid');
 	var length = textbox.value.length;
+	var status = getChromeElement('statusid');
 	if (length != 0) {
-		getChromeElement('statusid').value = length + '/140';
-		if (length > 140) {
-			if (textbox.getAttribute("class") != "full") {
-				textbox.setAttribute("class", "full");
-				textbox.style.color = "#F00";
-				textbox.style.backgroundColor = "#F00"; // Doesn't work
-				textbox.style.borderColor = "#F00"; // Doesn't work
-				jsdump("textbox.class : " + textbox.getAttribute("class"));
-			}
-		} else {
-			if (textbox.hasAttribute("class")) {
-				textbox.removeAttribute("class");
-				textbox.style.color = null;
-				textbox.style.backgroundColor = null; // Doesn't work
-				textbox.style.borderColor = null; // Doesn't work
-				jsdump("textbox.class : " + textbox.getAttribute("class"));
-			}
-		}
+		status.value = length + '/140';
 	} else {
-		getChromeElement('statusid').value = '';
-		textbox.removeAttribute("class");
-		jsdump("textbox.class : " + textbox.getAttribute("class"));
+		status.value = '';
+	}
+	
+	if (length>140) {
+		textbox.style.color = '#D00';
+		status.style.color = '#F00'
+	} else {
+		textbox.style.color = '#000';
+		status.style.color = '#000'
 	}
 }
 
@@ -249,23 +258,23 @@ function updateLengthDisplay() {
 //
 function progress(throbbing) {
 	var mainWindow = getMainWindow();
-	if (throbbing) {
-		getChromeElement('avatarId').src = 'chrome://buzzbird/content/images/ajax-loader.gif';
-	} else {
-		getChromeElement('avatarId').src = getChromeElement('avatarLabelId').value;
-	}
-
+//	if (throbbing) {
+//		getChromeElement('avatarId').src = 'chrome://buzzbird/content/images/ajax-loader.gif';
+//	} else {
+//		getChromeElement('avatarId').src = getChromeElement('avatarLabelId').value;
+//	}
 }
 
 // Returns 'tweet','reply','direct', or 'mine'
 //
 function tweetType(tweet) {
+	var re = new RegExp(".*?@" + getUsername() + ".*?");
 	var result = 'tweet'
 	if (tweet.text.substring(0,11) == "Directly to") {
 		result = 'direct-to';
 	} else if (tweet.sender != undefined) {
 		result = 'direct-from';
-	} else if (tweet.in_reply_to_screen_name == getUsername()) {
+	} else if (tweet.in_reply_to_screen_name == getUsername() || re.test(tweet.text)) {
 		result = 'reply';
 	} else if (tweet.user.screen_name == getUsername()) {
 		result = 'mine';
@@ -300,7 +309,10 @@ function updateTimestamps() {
 			var prettyWhen = "more than " + parseInt(delta/(ONE_DAY)) + "d ago";
 		}
 		var elid = 'prettytime-' + tweetid.substring(tweetid.indexOf('-')+1);
-		getBrowser().contentDocument.getElementById(elid).innerHTML = prettyWhen;
+		el = getBrowser().contentDocument.getElementById(elid)
+		if (el) {
+		  el.innerHTML = prettyWhen;
+		}
 	}
 	jsdump('finished updating timestamps.');
 
@@ -382,7 +394,7 @@ function formatTweet(tweet) {
      + "   </tr>"
      + "  </table>"
      + "  <div class=\"" + c.bottomRow + "\">"
-     + "   <img name=\"mark\" id=\"mark-" + tweet.id + "\" src=\"chrome://buzzbird/content/images/star-yellow.png\" style=\"width:16px; height:16px; vertical-align:middle;\""
+     + "   <img name=\"mark\" id=\"mark-" + tweet.id + "\" src=\"chrome://buzzbird/content/images/star-yellow.png\" style=\"width:16px; height:16px;\""
      + "        onclick=\"toggleMarkAsRead(" + tweet.id + ");\" onmouseover=\"this.style.cursor='pointer';\" />"
      + "   <span id=\"tweetInfo-" + tweet.id + "\">"
      + "    <span class=\"" + c.info + "\">" 
@@ -502,13 +514,15 @@ function fetchAll() {
 }
 
 function fetch() {
+	var markAsReadNow = getBoolPref("buzzbird.auto.markread",false);
+	if (markAsReadNow) {
+		markAllAsRead();
+	}
+	
+	// Don't think we need this check anymore, but I'm superstitious...
 	if(typeof fetchUrl === 'function') {
 		fetchUrl([getApiurl() + '/statuses/friends_timeline.json',getApiurl() + '/direct_messages.json']);
-	} //else {
-		//jsdump('Hmph.  fetchUrl is not defined?  Trying again in 5 seconds.');
-		//jsdump('Error - retrying.');
-		//window.setTimeout(forceUpdate, 5000);
-	//}
+	}
 }
 
 // This function is called from the UI to request a tweet fetch.
@@ -599,29 +613,37 @@ function keyUp(e) {
 // Filter tweet types.
 //
 function showAllTweets() {
-	showOrHide('tweet','inline');
-	showOrHide('mine','inline');
-	showOrHide('direct','inline');
-	showOrHide('reply','inline');	
-	getChromeElement('filterbuttonid').label="Showing all tweets";
+	// showOrHide('tweet','inline');
+	// showOrHide('mine','inline');
+	// showOrHide('direct-to','inline');
+	// showOrHide('direct-from','inline');
+	// showOrHide('reply','inline');	
+	var elements = getBrowser().contentDocument.getElementsByClassName('tweetBox');
+	for (i=elements.length-1; i>=0; i--) {
+		element = elements[i];
+		element.style.display = 'inline';
+	}
+	getChromeElement('filterbuttonid').label=getChromeElement('showingAllTweetsId').value;;
 }
 function showResponses() {
 	showOrHide('tweet','none');
 	showOrHide('mine','none');
-	showOrHide('direct','none');
+	showOrHide('direct-to','none');
+	showOrHide('direct-from','none');
 	showOrHide('reply','inline');	
-	getChromeElement('filterbuttonid').label="Showing replies";
+	getChromeElement('filterbuttonid').label=getChromeElement('showingRepliesId').value;
 }
 function showDirect() {
 	showOrHide('tweet','none');
 	showOrHide('mine','none');
-	showOrHide('direct','inline');
+	showOrHide('direct-to','inline');
+	showOrHide('direct-from','inline');
 	showOrHide('reply','none');	
-	getChromeElement('filterbuttonid').label="Showing direct messages";
+	getChromeElement('filterbuttonid').label=getChromeElement('showingDirectId').value;;
 }
 function showOrHide(tweetType,display) {
 	var elements = getBrowser().contentDocument.getElementsByName(tweetType);
-	for (i=0, l=elements.length; i<l; ++i) {
+	for (i=elements.length-1; i>=0; i--) {
 		element = elements[i];
 		element.style.display = display;
 	}
@@ -631,13 +653,68 @@ function showOrHide(tweetType,display) {
 //
 function markAllAsRead() {
 	var xx = getBrowser().contentDocument.getElementsByName('mark');
-	for (var i=0; i<xx.length; i++) {
+	var len = xx.length;
+	for (var i=0; i<len; i++) {
 		x = xx[i];
 		x.src='chrome://buzzbird/content/images/checkmark-gray.png'; 
-/*		x.name='marked';  */
 	}	
 }
 
+// Deletes all the previously marked-as-read tweets.  This is astoundingly inefficient.
+//
+function deleteAllRead() {
+	var xx = getBrowser().contentDocument.getElementsByName('mark');
+	var len = xx.length
+	while (len--) {
+		x = xx[len];
+		// Yes, this is a hack, too.
+		if (x.src == 'chrome://buzzbird/content/images/checkmark-gray.png') {
+			id = x.id.substring(x.id.indexOf('-')+1);
+			//jsdump( 'x.id ' + x.id + ' became ' + id);
+			removeTweetFromDom(id);
+		}
+	}
+}
+
+function removeTweetFromDom(id) {
+	//jsdump('delete ' + id);
+	el = getBrowser().contentDocument.getElementById('tweet-' + id);
+	if (el) {
+		el.parentNode.removeChild(el); 
+	} else {
+		jsdump('Could not find element with id tweet-' + id);
+	}
+}
+
+function speech(val) {
+	getChromeElement('textboxid').collapsed=val;		
+	getChromeElement('shortenUrlId').collapsed=val;		
+	getChromeElement('symbolButtonId').collapsed=val;		
+	if (val) {
+		getChromeElement('openSpeechId').image = 'chrome://buzzbird/content/images/speech-button-active-20x20.png';	
+	} else {
+		getChromeElement('openSpeechId').image = 'chrome://buzzbird/content/images/speech-button-pressed-20x20.png';	
+
+	}
+}
+
+function toggleSpeech() {
+	var collapsed = getChromeElement('textboxid').collapsed;
+	if (collapsed) {
+		speech(false);
+	} else {
+		speech(true);
+	}
+}
+
+function openSpeech() {
+	jsdump('openSpeech called');
+	speech(false);
+}
+
+function closeSpeech() {
+	speech(true);
+}
 function shortenUrl() {
 	var params = {};
 	window.openDialog("chrome://buzzbird/content/shorten.xul", "",
@@ -667,17 +744,28 @@ function onShortenCancel() {
 	return true;
 }
 
+function openAboutDialog() {
+	var params = {};
+	window.openDialog("chrome://buzzbird/content/about.xul", "",
+	    "chrome, dialog, resizable=no",params).focus();
+}
 
-// Marks/Unmarks one tweet.
-//
-function toggleMarkAsRead(id) {
-	var mark = 'mark-' + id;
-	var f = $(mark);
-	if (f.src=='chrome://buzzbird/content/images/star-yellow.png') {
-		f.src='chrome://buzzbird/content/images/checkmark-gray.png'; 
-	} else {
-		f.src='chrome://buzzbird/content/images/star-yellow.png'; 
-	}
+function zoomBigger() {
+	var docViewer = getBrowser().markupDocumentViewer;
+	docViewer.fullZoom = docViewer.fullZoom * 1.25;
+	setIntPref("buzzbird.zoom", docViewer.fullZoom * 100);
+}
+
+function zoomSmaller() {
+	var docViewer = getBrowser().markupDocumentViewer;
+	docViewer.fullZoom = docViewer.fullZoom * 0.8;	
+	setIntPref("buzzbird.zoom", docViewer.fullZoom * 100);
+}
+
+function zoomReset() {
+	var docViewer = getBrowser().markupDocumentViewer;
+	docViewer.fullZoom = 1.0;
+	setIntPref("buzzbird.zoom", 100);
 }
 
 function appendText(symbol) {
@@ -720,10 +808,11 @@ function start() {
 	var updateTimer = getMainWindow().setInterval( function(that) { that.fetch(); }, interval, getMainWindow());
 	getChromeElement('updateTimerId').value = updateTimer;
 	getChromeElement('toolbarid').collapsed=false;
-	getChromeElement('textboxid').collapsed=false;
 	getChromeElement('refreshButtonId').collapsed=false;
-	getChromeElement('shortenUrlId').collapsed=false;
 	getChromeElement('markAllAsReadId').collapsed=false;
-	getChromeElement('symbolButtonId').collapsed=false;
+	getChromeElement('openSpeechId').collapsed=false;
+	var zoom = getIntPref("buzzbird.zoom",100);
+	var docViewer = getBrowser().markupDocumentViewer;
+	docViewer.fullZoom = zoom/100.0;
 	fetchAll();
 }
